@@ -48,4 +48,5 @@ export class Walls {
     this.leftColor = leftColor;
     this.rightColor = rightColor;
   }
+
 }

@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { createText } from "../08_ui/createText";
 
 export class ScoreManager {
   private scene: Phaser.Scene;
@@ -7,15 +8,13 @@ export class ScoreManager {
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
-    this.scoreText = this.scene.add.text(10, 10, "score: 0", {
-      fontSize: "24px",
-      color: "#fff",
-    });
+
+    this.scoreText = createText(this.scene, 20, 10, "점수: 0")
   }
 
   increase() {
     this.score++;
-    this.scoreText.setText(`score: ${this.score}`);
+    this.scoreText.setText(`점수: ${this.score}`);
   }
 
   getScore() {

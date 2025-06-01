@@ -5,13 +5,16 @@ import { getDistinctColorPair } from "../07_constants/colors";
 import { SWIPE_THRESHOLD, MOVE_DURATION } from "../07_constants/constants";
 import { InputController } from "../04_controllers/inputController";
 import { ScoreManager } from "../03_managers/scoreManager";
+import { TimeManager } from "../03_managers/timeManager";
 import { Direction } from "../07_constants/direction";
+import { preloadCommonSounds } from "../05_assets/sounds";
 
 export class GameScene extends Phaser.Scene {
   private walls!: Walls;
   private circle!: Circle;
   private inputController!: InputController;
   private scoreManager!: ScoreManager;
+  private timeManager!: TimeManager;
 
   private isMoving = false;
   private moveDirection: Direction | null = null;
@@ -30,18 +33,23 @@ export class GameScene extends Phaser.Scene {
     this.circle.createCircle(leftColor);
 
     this.scoreManager = new ScoreManager(this);
+    this.timeManager = new TimeManager(this, 20, () => this.endGame());
 
-    this.inputController = new InputController(
-      this,
-      SWIPE_THRESHOLD,
-      (direction) => {
-        console.log("👆 Swipe Detected:", direction);
-        if (!this.isMoving) this.startMove(direction as Direction);
-      }
-    );
+    this.time.delayedCall(200, () => { // 바로 입력 받지 않음.
+      this.inputController = new InputController(
+        this,
+        SWIPE_THRESHOLD,
+        (direction) => {
+          console.log("👆 Swipe Detected:", direction);
+          if (!this.isMoving) this.startMove(direction as Direction);
+        }
+      );
+    });
   }
 
   update(time: number, delta: number) {
+    this.timeManager.update(delta);
+
     if (!this.isMoving) return;
 
     const targetX = this.getTargetX();
@@ -136,7 +144,7 @@ export class GameScene extends Phaser.Scene {
 
     if (matched) {
       // 성공했을 때 - 화려한 애니메이션
-      this.circle.explodeSuccess(() => {
+      this.circle.explodeSuccessEnhanced(() => {
         console.log("✅ Matched! 점수 증가");
         this.scoreManager.increase();
         this.resetCircleAndWalls();
@@ -145,7 +153,7 @@ export class GameScene extends Phaser.Scene {
       });
     } else {
       // 실패했을 때 - 거친 애니메이션
-      this.circle.explodeFailure(() => {
+      this.circle.explodeFailureEnhanced(() => {
         console.log("❌ 색상이 안 맞음");
         // 실패시에는 점수 증가 없음
         this.resetCircleAndWalls();
@@ -182,5 +190,12 @@ export class GameScene extends Phaser.Scene {
     this.circle.resetPosition();
     this.circle.circle.setAlpha(1);
     this.circle.circle.setScale(1);
+  }
+
+  private endGame() {
+    this.inputController.disable();
+    this.scene.start('ResultScene', {
+      score: this.scoreManager.getScore(),
+    });
   }
 }

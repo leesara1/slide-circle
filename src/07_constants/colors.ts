@@ -1,6 +1,13 @@
 import Phaser from 'phaser';
 
-const COLOR_PALETTE = [0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff, 0x00ffff];
+const COLOR_PALETTE = [
+  0xff6b6b, // 밝은 레드
+  0x6bcff6, // 스카이블루
+  0x6ef3a3, // 민트그린
+  0xf9ca24, // 샛노랑
+  0xa29bfe, // 라벤더 퍼플
+  0xfd79a8, // 핑크
+];
 
 export function getRandomColor(): number {
   return Phaser.Utils.Array.GetRandom(COLOR_PALETTE);
