@@ -10,7 +10,7 @@ import { Direction } from "../07_constants/direction";
 export class GameScene extends Phaser.Scene {
   private walls!: Walls;
   private circle!: Circle;
-  private inputController!: InputController;
+  private _inputController!: InputController;
   private scoreManager!: ScoreManager;
 
   private isMoving = false;
@@ -31,7 +31,7 @@ export class GameScene extends Phaser.Scene {
 
     this.scoreManager = new ScoreManager(this);
 
-    this.inputController = new InputController(
+    this._inputController = new InputController(
       this,
       SWIPE_THRESHOLD,
       (direction) => {
@@ -41,7 +41,7 @@ export class GameScene extends Phaser.Scene {
     );
   }
 
-  update(time: number, delta: number) {
+  update(_time: number, delta: number) {
     if (!this.isMoving) return;
 
     const targetX = this.getTargetX();
