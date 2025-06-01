@@ -8,4 +8,4 @@
 - 06_animations: 애니메이션 관련 설정
 - 07_constants: 재사용 가능한 상수
 - 08_ui: 버튼, 점수판 등의 UI 요소
-- main.ts: 게임을 초기화하는 진입점
+- main.ts: 메인
