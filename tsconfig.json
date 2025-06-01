@@ -15,8 +15,8 @@
 
     /* Linting */
     "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
+    "noUnusedLocals": false, // 미사용 지역변수 허용
+    "noUnusedParameters": false, // 미사용 매개변수 허용
     "erasableSyntaxOnly": false, // enum
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
