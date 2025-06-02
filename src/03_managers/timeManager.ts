@@ -1,43 +1,31 @@
-import Phaser from 'phaser';
-import { createText } from '../08_ui/createText';
+import Phaser from "phaser";
 
 export class TimeManager {
-    private scene: Phaser.Scene;
-    private timeLeft: number;
-    private timerText!: Phaser.GameObjects.Text;
-    private onTimeUp: () => void;
+  private scene: Phaser.Scene;
+  private duration: number; // 전체 시간 (초)
+  private remaining: number;
+  private onComplete: () => void;
 
-    constructor(scene: Phaser.Scene, durationSec: number, onTimeUp: () => void) {
-        this.scene = scene;
-        this.timeLeft = durationSec;
-        this.onTimeUp = onTimeUp;
+  constructor(scene: Phaser.Scene, seconds: number, onComplete: () => void) {
+    this.scene = scene;
+    this.duration = seconds;
+    this.remaining = seconds;
+    this.onComplete = onComplete;
+  }
 
-        this.timerText = createText(this.scene, scene.scale.width - 120, 10, "");
-
-        this.updateText();
+  update(delta: number) {
+    this.remaining -= delta / 1000;
+    if (this.remaining <= 0) {
+      this.remaining = 0;
+      this.onComplete();
     }
+  }
 
-    update(delta: number) {
-        this.timeLeft -= delta / 1000;
-        if (this.timeLeft <= 0) {
-            this.timeLeft = 0;
-            this.updateText();
-            this.onTimeUp();
-        } else {
-            this.updateText();
-        }
-    }
+  getRemainingSeconds(): number {
+    return Math.ceil(this.remaining);
+  }
 
-    private updateText() {
-        this.timerText.setText('Time: ' + Math.floor(this.timeLeft));
-    }
-
-    getTimeLeft() {
-        return this.timeLeft;
-    }
-
-    stop() {
-        this.timeLeft = 0;
-        this.updateText();
-    }
+  reset() {
+    this.remaining = this.duration;
+  }
 }

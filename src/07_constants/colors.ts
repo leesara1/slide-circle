@@ -1,4 +1,4 @@
-import Phaser from 'phaser';
+import Phaser from "phaser";
 
 const COLOR_PALETTE = [
   0xff6b6b, // 밝은 레드
@@ -23,3 +23,13 @@ export function getDistinctColorPair(): { left: number; right: number } {
 
   return { left, right };
 }
+
+export const COLORS = {
+  background: "#222222",
+  primary: "#4f46e5",
+  accent: "#22d3ee",
+  danger: "#ef4444",
+  text: "#ffffff",
+  buttonText: "#ffffff",
+  buttonBg: "#4f46e5",
+};
