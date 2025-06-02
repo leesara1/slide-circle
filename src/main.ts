@@ -1,6 +1,7 @@
 import Phaser from "phaser";
+import { StartScene } from "./01_scenes/StartScene";
 import { GameScene } from "./01_scenes/GameScene";
-import { createStartUI } from "./08_ui/startUI";
+import { ResultScene } from "./01_scenes/ResultScene";
 
 const dpr = window.devicePixelRatio || 1;
 
@@ -14,15 +15,8 @@ const config: Phaser.Types.Core.GameConfig = {
     height: window.innerHeight * dpr,
   },
   render: { antialias: true },
-  scene: [GameScene],
+  scene: [StartScene, GameScene, ResultScene],
   parent: "app",
 };
 
 const game = new Phaser.Game(config);
-
-createStartUI(() => {
-  const gameScene = game.scene.getScene("GameScene") as GameScene;
-  gameScene.initUI();
-  game.scene.start("GameScene");
-  gameScene.sound.play("click");
-});

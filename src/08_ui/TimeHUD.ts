@@ -1,5 +1,3 @@
-import "./styles.css";
-
 export class TimeHUD {
   private timeEl: HTMLElement;
 

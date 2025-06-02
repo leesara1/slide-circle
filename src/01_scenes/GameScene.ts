@@ -10,7 +10,7 @@ import { Direction } from "../07_constants/direction";
 import { preloadCommonSounds } from "../05_assets/sounds";
 import { ScoreHUD } from "../08_ui/ScoreHUD";
 import { TimeHUD } from "../08_ui/TimeHUD";
-import { createResultUI } from "../08_ui/resultUI";
+import { createResultUI } from "../08_ui/ResultUI";
 
 export class GameScene extends Phaser.Scene {
   private scoreHud?: ScoreHUD;
@@ -42,8 +42,10 @@ export class GameScene extends Phaser.Scene {
     this.circle = new Circle(this);
     this.circle.createCircle(leftColor);
 
+    this.scoreHud = new ScoreHUD();
+    this.timeHud = new TimeHUD();
     this.scoreManager = new ScoreManager();
-    this.timeManager = new TimeManager(this, 20, () => this.endGame());
+    this.timeManager = new TimeManager(20, () => this.endGame());
 
     this.time.delayedCall(200, () => {
       this.inputController = new InputController(
@@ -54,15 +56,11 @@ export class GameScene extends Phaser.Scene {
         }
       );
     });
-  }
 
-  // 외부에서 호출되는 UI 초기화 메서드
-  public initUI() {
-    document.getElementById("score-hud")?.remove();
-    document.getElementById("time-hud")?.remove();
-    document.getElementById("result-ui")?.remove();
-    this.scoreHud = new ScoreHUD();
-    this.timeHud = new TimeHUD();
+    this.events.once("shutdown", () => {
+      this.scoreHud?.destroy();
+      this.timeHud?.destroy();
+    });
   }
 
   update(time: number, delta: number) {
@@ -177,18 +175,8 @@ export class GameScene extends Phaser.Scene {
     this.circle.circle.setScale(1);
   }
 
-  private endGame() {
-    this.inputController.disable();
-    this.scoreHud?.destroy();
-    this.timeHud?.destroy();
-
-    createResultUI(this.scoreManager.getScore(), () => {
-      console.log("restart");
-      this.scoreManager.reset();
-      this.scene.restart();
-      this.scene.scene.events.once("create", () => {
-        this.initUI();
-      });
-    });
+  endGame() {
+    const score = this.scoreManager.getScore();
+    this.scene.start("ResultScene", { score });
   }
 }

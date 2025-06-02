@@ -1,5 +1,3 @@
-import "./styles.css";
-
 export class ScoreHUD {
   private scoreEl: HTMLDivElement;
 

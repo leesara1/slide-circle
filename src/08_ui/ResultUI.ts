@@ -1,9 +1,6 @@
-import "./styles.css";
-
 export function createResultUI(score: number, onRestart: () => void) {
-  const container = document.getElementById("app")!;
+  const container = document.getElementById("ui-layer")!;
 
-  // 이전 UI가 남아 있다면 제거
   document.getElementById("result-ui")?.remove();
 
   const ui = document.createElement("div");

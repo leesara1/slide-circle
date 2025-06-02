@@ -1,13 +1,9 @@
-import Phaser from "phaser";
-
 export class TimeManager {
-  private scene: Phaser.Scene;
   private duration: number; // 전체 시간 (초)
   private remaining: number;
   private onComplete: () => void;
 
-  constructor(scene: Phaser.Scene, seconds: number, onComplete: () => void) {
-    this.scene = scene;
+  constructor(seconds: number, onComplete: () => void) {
     this.duration = seconds;
     this.remaining = seconds;
     this.onComplete = onComplete;

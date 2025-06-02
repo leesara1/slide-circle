@@ -1,7 +1,7 @@
-import "./styles.css"; // CSS도 모듈처럼 가져옴
-
 export function createStartUI(onStart: () => void) {
-  const container = document.getElementById("app")!;
+  const container = document.getElementById("ui-layer")!;
+
+  document.getElementById("start-ui")?.remove();
 
   const ui = document.createElement("div");
   ui.id = "start-ui";
@@ -11,7 +11,6 @@ export function createStartUI(onStart: () => void) {
   `;
   container.appendChild(ui);
 
-  // 이벤트 연결
   document.getElementById("start-button")?.addEventListener("click", () => {
     ui.remove();
     onStart();
