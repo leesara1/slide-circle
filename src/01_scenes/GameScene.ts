@@ -8,8 +8,13 @@ import { ScoreManager } from "../03_managers/scoreManager";
 import { TimeManager } from "../03_managers/timeManager";
 import { Direction } from "../07_constants/direction";
 import { preloadCommonSounds } from "../05_assets/sounds";
+import { ScoreHUD } from "../08_ui/ScoreHUD";
+import { TimeHUD } from "../08_ui/TimeHUD";
+import { createResultUI } from "../08_ui/resultUI";
 
 export class GameScene extends Phaser.Scene {
+  private scoreHud?: ScoreHUD;
+  private timeHud?: TimeHUD;
   private walls!: Walls;
   private circle!: Circle;
   private inputController!: InputController;
@@ -23,7 +28,12 @@ export class GameScene extends Phaser.Scene {
     super("GameScene");
   }
 
+  preload() {
+    preloadCommonSounds(this);
+  }
+
   create() {
+    // HUD 생성은 start 버튼 누를 때 외부에서 호출되도록
     const { left: leftColor, right: rightColor } = getDistinctColorPair();
 
     this.walls = new Walls(this);
@@ -32,58 +42,50 @@ export class GameScene extends Phaser.Scene {
     this.circle = new Circle(this);
     this.circle.createCircle(leftColor);
 
-    this.scoreManager = new ScoreManager(this);
+    this.scoreManager = new ScoreManager();
     this.timeManager = new TimeManager(this, 20, () => this.endGame());
 
-    this.time.delayedCall(200, () => { // 바로 입력 받지 않음.
+    this.time.delayedCall(200, () => {
       this.inputController = new InputController(
         this,
         SWIPE_THRESHOLD,
         (direction) => {
-          console.log("👆 Swipe Detected:", direction);
           if (!this.isMoving) this.startMove(direction as Direction);
         }
       );
     });
   }
 
+  // 외부에서 호출되는 UI 초기화 메서드
+  public initUI() {
+    document.getElementById("score-hud")?.remove();
+    document.getElementById("time-hud")?.remove();
+    document.getElementById("result-ui")?.remove();
+    this.scoreHud = new ScoreHUD();
+    this.timeHud = new TimeHUD();
+  }
+
   update(time: number, delta: number) {
     this.timeManager.update(delta);
+    this.timeHud?.update(this.timeManager.getRemainingSeconds());
 
     if (!this.isMoving) return;
 
     const targetX = this.getTargetX();
     const currentX = this.circle.circle.x;
     const dist = Math.abs(targetX - currentX);
-    const step = (delta / MOVE_DURATION) * Math.max(dist, 100); // 최소 이동 속도 보장
-
-    console.log(
-      `Moving: current=${currentX.toFixed(1)}, target=${targetX.toFixed(
-        1
-      )}, step=${step.toFixed(1)}`
-    );
+    const step = (delta / MOVE_DURATION) * Math.max(dist, 100);
 
     if (this.moveDirection === Direction.LEFT) {
       const newX = Math.max(currentX - step, targetX);
       this.circle.circle.x = newX;
-
-      // 도착 조건 확인 (여유를 둬서 확인)
-      if (newX <= targetX + 1) {
-        console.log("👆 LEFT 벽 도착!");
-        this.completeMove(Direction.LEFT);
-      }
+      if (newX <= targetX + 1) this.completeMove(Direction.LEFT);
     } else if (this.moveDirection === Direction.RIGHT) {
       const newX = Math.min(currentX + step, targetX);
       this.circle.circle.x = newX;
-
-      // 도착 조건 확인 (여유를 둬서 확인)
-      if (newX >= targetX - 1) {
-        console.log("👆 RIGHT 벽 도착!");
-        this.completeMove(Direction.RIGHT);
-      }
+      if (newX >= targetX - 1) this.completeMove(Direction.RIGHT);
     }
 
-    // 추가 안전장치: 벽 경계를 넘어가지 않도록
     this.checkWallCollision();
   }
 
@@ -91,22 +93,22 @@ export class GameScene extends Phaser.Scene {
     const circleX = this.circle.circle.x;
     const circleRadius = this.circle.RADIUS;
 
-    // 왼쪽 벽 충돌 체크
     const leftWallRight = this.walls.leftWall.x + this.walls.WIDTH / 2;
-    if (circleX - circleRadius <= leftWallRight) {
-      console.log("🔴 왼쪽 벽 충돌 감지!");
-      if (this.isMoving && this.moveDirection === Direction.LEFT) {
-        this.completeMove(Direction.LEFT);
-      }
+    if (
+      circleX - circleRadius <= leftWallRight &&
+      this.isMoving &&
+      this.moveDirection === Direction.LEFT
+    ) {
+      this.completeMove(Direction.LEFT);
     }
 
-    // 오른쪽 벽 충돌 체크
     const rightWallLeft = this.walls.rightWall.x - this.walls.WIDTH / 2;
-    if (circleX + circleRadius >= rightWallLeft) {
-      console.log("🔴 오른쪽 벽 충돌 감지!");
-      if (this.isMoving && this.moveDirection === Direction.RIGHT) {
-        this.completeMove(Direction.RIGHT);
-      }
+    if (
+      circleX + circleRadius >= rightWallLeft &&
+      this.isMoving &&
+      this.moveDirection === Direction.RIGHT
+    ) {
+      this.completeMove(Direction.RIGHT);
     }
   }
 
@@ -119,43 +121,30 @@ export class GameScene extends Phaser.Scene {
   }
 
   private completeMove(direction: Direction) {
-    if (!this.isMoving) return; // 중복 호출 방지
-
-    console.log(`👆 ${direction} 끝 도착 - checkMatch 호출 직전`);
-    console.log(
-      `Circle position: ${this.circle.circle.x}, Target: ${this.getTargetX()}`
-    );
-
+    if (!this.isMoving) return;
     this.isMoving = false;
     this.checkMatch(direction);
   }
 
   private startMove(direction: Direction) {
     if (this.isMoving) return;
-
-    console.log(`🚀 ${direction} 방향으로 이동 시작`);
     this.isMoving = true;
     this.moveDirection = direction;
   }
 
   private checkMatch(wallSide: Direction) {
     const matched = this.isColorMatched(wallSide);
-    console.log(`🎯 매치 체크: ${matched ? "성공" : "실패"} (${wallSide})`);
 
     if (matched) {
-      // 성공했을 때 - 화려한 애니메이션
       this.circle.explodeSuccessEnhanced(() => {
-        console.log("✅ Matched! 점수 증가");
         this.scoreManager.increase();
+        this.scoreHud?.update(this.scoreManager.getScore());
         this.resetCircleAndWalls();
         this.isMoving = false;
         this.moveDirection = null;
       });
     } else {
-      // 실패했을 때 - 거친 애니메이션
       this.circle.explodeFailureEnhanced(() => {
-        console.log("❌ 색상이 안 맞음");
-        // 실패시에는 점수 증가 없음
         this.resetCircleAndWalls();
         this.isMoving = false;
         this.moveDirection = null;
@@ -172,8 +161,6 @@ export class GameScene extends Phaser.Scene {
   private resetCircleAndWalls() {
     const { left: leftColor, right: rightColor } = getDistinctColorPair();
 
-    console.log(`🔄 리셋: 새 색상 - Left: ${leftColor}, Right: ${rightColor}`);
-
     this.walls.leftWall.setFillStyle(leftColor);
     this.walls.rightWall.setFillStyle(rightColor);
     this.walls.leftColor = leftColor;
@@ -184,8 +171,6 @@ export class GameScene extends Phaser.Scene {
       rightColor,
     ]);
 
-    console.log(`🟡 새 원 색상: ${newCircleColor}`);
-
     this.circle.setColor(newCircleColor);
     this.circle.resetPosition();
     this.circle.circle.setAlpha(1);
@@ -194,8 +179,16 @@ export class GameScene extends Phaser.Scene {
 
   private endGame() {
     this.inputController.disable();
-    this.scene.start('ResultScene', {
-      score: this.scoreManager.getScore(),
+    this.scoreHud?.destroy();
+    this.timeHud?.destroy();
+
+    createResultUI(this.scoreManager.getScore(), () => {
+      console.log("restart");
+      this.scoreManager.reset();
+      this.scene.restart();
+      this.scene.scene.events.once("create", () => {
+        this.initUI();
+      });
     });
   }
 }
