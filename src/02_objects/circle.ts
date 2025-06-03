@@ -6,7 +6,7 @@ export class Circle {
   circle!: Phaser.GameObjects.Arc;
   color!: number;
 
-  readonly RADIUS = 80;
+  readonly RADIUS = 100;
   startX: number;
   startY: number;
 

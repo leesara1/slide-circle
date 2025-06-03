@@ -1,62 +1,58 @@
-/* 전체 초기화 및 폰트 적용 */
-* {
+html,
+body {
   margin: 0;
   padding: 0;
+  height: 100%;
   font-family: "Noto Sans", sans-serif;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
-/* Phaser 캔버스: 항상 맨 아래 */
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
+}
+
+/* 앱 컨테이너 */
+#app {
+  width: 100vw;
+  height: calc(var(--vh, 1vh) * 100);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Phaser 캔버스 */
 canvas {
   position: absolute;
   top: 0;
   left: 0;
-  width: 100% !important;
-  height: 100% !important;
-  z-index: 0;
+  display: block;
 }
 
-#app {
-  position: relative;
-  width: 100vw;
-  height: 100vh;
-}
-
-/* UI 레이어: 캔버스 위에 덮는 컨테이너 */
+/* UI 레이어 */
 #ui-layer {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  pointer-events: none; /* 기본적으로 UI 레이어는 클릭 불가 */
+  pointer-events: none;
   z-index: 10;
 }
 
-/* UI 레이어의 자식들은 클릭 가능 */
 #ui-layer > * {
   pointer-events: auto;
-}
-
-/* 시작 UI: 전체 화면 덮기 */
-#start-ui {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
   display: flex;
   flex-direction: column;
-  align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 20;
+  align-items: center;
+  height: 100%;
+  color: black;
+  gap: 1.5rem;
 }
-#start-ui h1 {
-  color: white;
-  font-size: 3rem;
-}
-#start-ui button {
+
+#ui-layer button {
   font-size: 1.2rem;
   padding: 1rem 2rem;
   cursor: pointer;
@@ -66,42 +62,8 @@ canvas {
   color: #222;
   transition: background-color 0.3s;
 }
-#start-ui button:hover {
-  background: #ddd;
-}
 
-/* 결과 UI: 화면 중앙에 고정 */
-#result-ui {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: rgba(0, 0, 0, 0.85);
-  color: white;
-  padding: 2rem 3rem;
-  border-radius: 12px;
-  text-align: center;
-  z-index: 30;
-}
-#result-ui h2 {
-  font-size: 2rem;
-  margin-bottom: 1rem;
-}
-#result-ui p {
-  font-size: 1.2rem;
-  margin-bottom: 1.5rem;
-}
-#result-ui button {
-  font-size: 1rem;
-  padding: 0.75rem 1.5rem;
-  cursor: pointer;
-  border: none;
-  border-radius: 6px;
-  background-color: #fff;
-  color: #222;
-  transition: background-color 0.3s;
-}
-#result-ui button:hover {
+#ui-layer button:hover {
   background: #ddd;
 }
 
@@ -109,16 +71,17 @@ canvas {
 .hud-ui {
   position: absolute;
   font-size: 1.5rem;
-  color: white;
-  z-index: 40;
-  font-family: "Noto Sans", sans-serif;
+  color: black;
   user-select: none;
-  pointer-events: none; /* HUD는 클릭 불가 */
+  pointer-events: none;
+  z-index: 40;
 }
+
 #score-ui {
   top: 20px;
   left: 20px;
 }
+
 #time-ui {
   top: 20px;
   right: 20px;

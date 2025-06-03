@@ -8,7 +8,7 @@ export function createResultUI(score: number, onRestart: () => void) {
   ui.className = "result-ui";
   ui.innerHTML = `
     <h2>게임 종료</h2>
-    <p>점수: ${score}</p>
+    <h1>점수: ${score}</h1>
     <button id="restart-button">다시 시작</button>
   `;
   container.appendChild(ui);

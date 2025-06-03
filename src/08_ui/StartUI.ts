@@ -6,7 +6,7 @@ export function createStartUI(onStart: () => void) {
   const ui = document.createElement("div");
   ui.id = "start-ui";
   ui.innerHTML = `
-    <h1>Slide Circle</h1>
+    <h1>Slide Game</h1>
     <button id="start-button">게임 시작</button>
   `;
   container.appendChild(ui);
