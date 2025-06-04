@@ -12,7 +12,7 @@ window.addEventListener("resize", setRealVh);
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
-  backgroundColor: "#f2f2f2",
+  backgroundColor: "#D4E3A3",
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
