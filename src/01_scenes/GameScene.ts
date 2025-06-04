@@ -10,7 +10,6 @@ import { Direction } from "../07_constants/direction";
 import { preloadCommonSounds } from "../05_assets/sounds";
 import { ScoreHUD } from "../08_ui/ScoreHUD";
 import { TimeHUD } from "../08_ui/TimeHUD";
-import { createResultUI } from "../08_ui/ResultUI";
 
 export class GameScene extends Phaser.Scene {
   private scoreHud?: ScoreHUD;
@@ -33,7 +32,6 @@ export class GameScene extends Phaser.Scene {
   }
 
   create() {
-    // HUD 생성은 start 버튼 누를 때 외부에서 호출되도록
     const { left: leftColor, right: rightColor } = getDistinctColorPair();
 
     this.walls = new Walls(this);

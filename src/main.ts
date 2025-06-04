@@ -3,20 +3,25 @@ import { StartScene } from "./01_scenes/StartScene";
 import { GameScene } from "./01_scenes/GameScene";
 import { ResultScene } from "./01_scenes/ResultScene";
 
-const dpr = window.devicePixelRatio || 1;
+function setRealVh() {
+  const vh = window.innerHeight * 0.01;
+  document.documentElement.style.setProperty("--vh", `${vh}px`);
+}
+setRealVh();
+window.addEventListener("resize", setRealVh);
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
-  backgroundColor: "#222222",
+  backgroundColor: "#f2f2f2",
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
-    width: window.innerWidth * dpr,
-    height: window.innerHeight * dpr,
+    width: window.innerWidth,
+    height: window.innerHeight,
   },
   render: { antialias: true },
   scene: [StartScene, GameScene, ResultScene],
   parent: "app",
 };
 
-const game = new Phaser.Game(config);
+new Phaser.Game(config);
