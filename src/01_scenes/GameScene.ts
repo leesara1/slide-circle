@@ -1,180 +1,147 @@
 import Phaser from "phaser";
-import { Walls } from "../02_objects/walls";
-import { Circle } from "../02_objects/circle";
-import { getDistinctColorPair } from "../07_constants/colors";
-import { SWIPE_THRESHOLD, MOVE_DURATION } from "../07_constants/constants";
+import { preloadCommonSounds, SOUND_KEYS } from "../05_assets/sounds";
+import { Direction } from "../07_constants/direction";
+import { Apple } from "../02_objects/apple";
+import { preloadAppleImages } from "../05_assets/images";
 import { InputController } from "../04_controllers/inputController";
+import { ScoreHUD } from "../08_ui/ScoreHUD";
 import { ScoreManager } from "../03_managers/scoreManager";
 import { TimeManager } from "../03_managers/timeManager";
-import { Direction } from "../07_constants/direction";
-import { preloadCommonSounds } from "../05_assets/sounds";
-import { ScoreHUD } from "../08_ui/ScoreHUD";
 import { TimeHUD } from "../08_ui/TimeHUD";
 
 export class GameScene extends Phaser.Scene {
-  private scoreHud?: ScoreHUD;
-  private timeHud?: TimeHUD;
-  private walls!: Walls;
-  private circle!: Circle;
-  private inputController!: InputController;
-  private scoreManager!: ScoreManager;
-  private timeManager!: TimeManager;
+  private leftStack: Apple[] = [];
+  private rightStack: Apple[] = [];
+  private currentApple?: Apple;
+  private score = 0;
+  private readonly MAX_STACK = 10;
 
-  private isMoving = false;
-  private moveDirection: Direction | null = null;
+  private scoreManager!: ScoreManager;
+  private scoreHUD!: ScoreHUD;
+  private timeManager!: TimeManager;
+  private timeHUD!: TimeHUD;
 
   constructor() {
     super("GameScene");
   }
 
   preload() {
+    preloadAppleImages(this);
     preloadCommonSounds(this);
   }
 
   create() {
-    const { left: leftColor, right: rightColor } = getDistinctColorPair();
-
-    this.walls = new Walls(this);
-    this.walls.createWalls(leftColor, rightColor);
-
-    this.circle = new Circle(this);
-    this.circle.createCircle(leftColor);
-
-    this.scoreHud = new ScoreHUD();
-    this.timeHud = new TimeHUD();
-    this.scoreManager = new ScoreManager();
-    this.timeManager = new TimeManager(20, () => this.endGame());
-
-    this.time.delayedCall(200, () => {
-      this.inputController = new InputController(
-        this,
-        SWIPE_THRESHOLD,
-        (direction) => {
-          if (!this.isMoving) this.startMove(direction as Direction);
-        }
-      );
-    });
+    this.scoreHUD = new ScoreHUD();
+    this.scoreManager = new ScoreManager(this.scoreHUD);
+    this.timeHUD = new TimeHUD();
+    this.timeManager = new TimeManager(
+      20,
+      () => {
+        const score = this.scoreManager.getScore();
+        this.scene.start("ResultScene", { score });
+      },
+      this.timeHUD
+    );
 
     this.events.once("shutdown", () => {
-      this.scoreHud?.destroy();
-      this.timeHud?.destroy();
+      this.scoreHUD.destroy();
+      this.timeHUD.destroy();
     });
+
+    new InputController(this, 30, (dir: Direction) => {
+      if (!this.currentApple) return;
+
+      switch (dir) {
+        case Direction.LEFT:
+        case Direction.RIGHT:
+          this.slideAppleTo(dir);
+          break;
+        case Direction.UP:
+          this.replaceApple();
+          break;
+        case Direction.DOWN:
+          break;
+      }
+    });
+
+    this.currentApple = this.spawnApple();
   }
 
   update(time: number, delta: number) {
     this.timeManager.update(delta);
-    this.timeHud?.update(this.timeManager.getRemainingSeconds());
+  }
 
-    if (!this.isMoving) return;
+  private slideAppleTo(direction: Direction) {
+    if (!this.currentApple) return;
 
-    const targetX = this.getTargetX();
-    const currentX = this.circle.circle.x;
-    const dist = Math.abs(targetX - currentX);
-    const step = (delta / MOVE_DURATION) * Math.max(dist, 100);
+    const width = this.cameras.main.width;
+    const height = this.cameras.main.height;
 
-    if (this.moveDirection === Direction.LEFT) {
-      const newX = Math.max(currentX - step, targetX);
-      this.circle.circle.x = newX;
-      if (newX <= targetX + 1) this.completeMove(Direction.LEFT);
-    } else if (this.moveDirection === Direction.RIGHT) {
-      const newX = Math.min(currentX + step, targetX);
-      this.circle.circle.x = newX;
-      if (newX >= targetX - 1) this.completeMove(Direction.RIGHT);
+    const isMobile = width < 600;
+
+    const STACK_X_OFFSET = isMobile ? 100 : 180;
+    const STACK_BOTTOM_MARGIN = isMobile ? 80 : 100;
+    const APPLE_HEIGHT = isMobile ? 50 : 80;
+
+    const stack =
+      direction === Direction.LEFT ? this.leftStack : this.rightStack;
+
+    const x =
+      direction === Direction.LEFT ? STACK_X_OFFSET : width - STACK_X_OFFSET;
+    const y = height - STACK_BOTTOM_MARGIN - stack.length * APPLE_HEIGHT;
+
+    const apple = this.currentApple;
+    const sprite = apple.sprite;
+    this.currentApple = undefined;
+
+    this.sound.play(SOUND_KEYS.CLICK);
+
+    this.tweens.add({
+      targets: sprite,
+      x,
+      y,
+      duration: 200,
+      onComplete: () => {
+        stack.push(apple);
+        this.checkStack(direction);
+        this.currentApple = this.spawnApple();
+      },
+    });
+  }
+
+  private replaceApple() {
+    this.currentApple?.sprite.destroy(); // 현재 사과 제거
+    this.currentApple = this.spawnApple(); // 새 사과 생성
+  }
+
+  private spawnApple() {
+    const x = this.cameras.main.centerX;
+    return new Apple(this, x, 400);
+  }
+
+  private getStackNumberSum(stack: Apple[]): number {
+    return stack.reduce((sum, apple) => sum + apple.number, 0);
+  }
+
+  private checkStack(direction: Direction) {
+    const stack =
+      direction === Direction.LEFT ? this.leftStack : this.rightStack;
+    const totalNumber = this.getStackNumberSum(stack);
+    console.log(totalNumber);
+
+    if (totalNumber === this.MAX_STACK) {
+      this.scoreManager.increase();
+      while (stack.length > 0) {
+        const apple = stack.pop();
+        apple?.sprite.destroy();
+      }
     }
 
-    this.checkWallCollision();
-  }
-
-  private checkWallCollision() {
-    const circleX = this.circle.circle.x;
-    const circleRadius = this.circle.RADIUS;
-
-    const leftWallRight = this.walls.leftWall.x + this.walls.WIDTH / 2;
-    if (
-      circleX - circleRadius <= leftWallRight &&
-      this.isMoving &&
-      this.moveDirection === Direction.LEFT
-    ) {
-      this.completeMove(Direction.LEFT);
+    if (totalNumber > this.MAX_STACK) {
+      while (stack.length > 0) {
+        const apple = stack.pop();
+        apple?.sprite.destroy();
+      }
     }
-
-    const rightWallLeft = this.walls.rightWall.x - this.walls.WIDTH / 2;
-    if (
-      circleX + circleRadius >= rightWallLeft &&
-      this.isMoving &&
-      this.moveDirection === Direction.RIGHT
-    ) {
-      this.completeMove(Direction.RIGHT);
-    }
-  }
-
-  private getTargetX(): number {
-    if (!this.moveDirection) return this.circle.circle.x;
-
-    return this.moveDirection === Direction.LEFT
-      ? this.walls.leftWall.x + this.walls.WIDTH / 2 + this.circle.RADIUS
-      : this.walls.rightWall.x - this.walls.WIDTH / 2 - this.circle.RADIUS;
-  }
-
-  private completeMove(direction: Direction) {
-    if (!this.isMoving) return;
-    this.isMoving = false;
-    this.checkMatch(direction);
-  }
-
-  private startMove(direction: Direction) {
-    if (this.isMoving) return;
-    this.isMoving = true;
-    this.moveDirection = direction;
-  }
-
-  private checkMatch(wallSide: Direction) {
-    const matched = this.isColorMatched(wallSide);
-
-    if (matched) {
-      this.circle.explodeSuccessEnhanced(() => {
-        this.scoreManager.increase();
-        this.scoreHud?.update(this.scoreManager.getScore());
-        this.resetCircleAndWalls();
-        this.isMoving = false;
-        this.moveDirection = null;
-      });
-    } else {
-      this.circle.explodeFailureEnhanced(() => {
-        this.resetCircleAndWalls();
-        this.isMoving = false;
-        this.moveDirection = null;
-      });
-    }
-  }
-
-  private isColorMatched(wallSide: Direction): boolean {
-    return wallSide === Direction.LEFT
-      ? this.circle.color === this.walls.leftColor
-      : this.circle.color === this.walls.rightColor;
-  }
-
-  private resetCircleAndWalls() {
-    const { left: leftColor, right: rightColor } = getDistinctColorPair();
-
-    this.walls.leftWall.setFillStyle(leftColor);
-    this.walls.rightWall.setFillStyle(rightColor);
-    this.walls.leftColor = leftColor;
-    this.walls.rightColor = rightColor;
-
-    const newCircleColor = Phaser.Utils.Array.GetRandom([
-      leftColor,
-      rightColor,
-    ]);
-
-    this.circle.setColor(newCircleColor);
-    this.circle.resetPosition();
-    this.circle.circle.setAlpha(1);
-    this.circle.circle.setScale(1);
-  }
-
-  endGame() {
-    const score = this.scoreManager.getScore();
-    this.scene.start("ResultScene", { score });
   }
 }
