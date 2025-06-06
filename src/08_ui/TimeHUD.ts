@@ -1,19 +1,36 @@
 export class TimeHUD {
-  private timeEl: HTMLElement;
+  private uiEl: HTMLElement;
+  private fillEl: HTMLElement;
+  private textEl: HTMLElement;
+  private readonly maxSeconds: number;
 
-  constructor() {
-    this.timeEl = document.createElement("div");
-    this.timeEl.id = "time-ui";
-    this.timeEl.className = "hud-ui";
-    this.timeEl.innerText = "남은 시간: 20";
-    document.body.appendChild(this.timeEl);
+  constructor(maxSeconds: number = 20) {
+    this.maxSeconds = maxSeconds;
+
+    // UI 전체 생성
+    this.uiEl = document.createElement("div");
+    this.uiEl.id = "time-ui";
+    this.uiEl.className = "hud-ui";
+    this.uiEl.innerHTML = `
+      <div class="time-bar">
+        <div class="time-fill"></div>
+        <div class="time-text">20</div>
+      </div>
+    `;
+    document.body.appendChild(this.uiEl);
+
+    // 게이지 채우는 부분 참조 저장
+    this.fillEl = this.uiEl.querySelector(".time-fill") as HTMLElement;
+    this.textEl = this.uiEl.querySelector(".time-text") as HTMLElement;
   }
 
   update(seconds: number) {
-    this.timeEl.innerText = `남은 시간: ${seconds}`;
+    const percent = Math.max(0, (seconds / this.maxSeconds) * 100);
+    this.fillEl.style.width = `${percent}%`;
+    this.textEl.innerText = `${Math.ceil(seconds)}`;
   }
 
   destroy() {
-    this.timeEl.remove();
+    this.uiEl.remove();
   }
 }

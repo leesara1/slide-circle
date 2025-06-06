@@ -13,7 +13,6 @@ export class GameScene extends Phaser.Scene {
   private leftStack: Apple[] = [];
   private rightStack: Apple[] = [];
   private currentApple?: Apple;
-  private score = 0;
   private readonly MAX_STACK = 10;
 
   private scoreManager!: ScoreManager;
@@ -44,6 +43,7 @@ export class GameScene extends Phaser.Scene {
     );
 
     this.events.once("shutdown", () => {
+      this.clearStacks();
       this.scoreHUD.destroy();
       this.timeHUD.destroy();
     });
@@ -79,15 +79,16 @@ export class GameScene extends Phaser.Scene {
 
     const isMobile = width < 600;
 
-    const STACK_X_OFFSET = isMobile ? 100 : 180;
+    const STACK_X_PERCENT = 0.15;
     const STACK_BOTTOM_MARGIN = isMobile ? 80 : 100;
-    const APPLE_HEIGHT = isMobile ? 50 : 80;
+    const APPLE_HEIGHT = isMobile ? 40 : 80;
 
     const stack =
       direction === Direction.LEFT ? this.leftStack : this.rightStack;
 
-    const x =
-      direction === Direction.LEFT ? STACK_X_OFFSET : width - STACK_X_OFFSET;
+    const x = direction === Direction.LEFT
+      ? width * STACK_X_PERCENT
+      : width * (1 - STACK_X_PERCENT);
     const y = height - STACK_BOTTOM_MARGIN - stack.length * APPLE_HEIGHT;
 
     const apple = this.currentApple;
@@ -116,7 +117,7 @@ export class GameScene extends Phaser.Scene {
 
   private spawnApple() {
     const x = this.cameras.main.centerX;
-    return new Apple(this, x, 400);
+    return new Apple(this, x, 280);
   }
 
   private getStackNumberSum(stack: Apple[]): number {
@@ -144,4 +145,22 @@ export class GameScene extends Phaser.Scene {
       }
     }
   }
+
+  private clearStacks() {
+    for (const apple of this.leftStack) {
+      apple.sprite.destroy();
+    }
+    for (const apple of this.rightStack) {
+      apple.sprite.destroy();
+    }
+
+    this.leftStack = [];
+    this.rightStack = [];
+
+    if (this.currentApple) {
+      this.currentApple.sprite.destroy();
+      this.currentApple = undefined;
+    }
+  }
+
 }
