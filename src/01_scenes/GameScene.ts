@@ -86,9 +86,10 @@ export class GameScene extends Phaser.Scene {
     const stack =
       direction === Direction.LEFT ? this.leftStack : this.rightStack;
 
-    const x = direction === Direction.LEFT
-      ? width * STACK_X_PERCENT
-      : width * (1 - STACK_X_PERCENT);
+    const x =
+      direction === Direction.LEFT
+        ? width * STACK_X_PERCENT
+        : width * (1 - STACK_X_PERCENT);
     const y = height - STACK_BOTTOM_MARGIN - stack.length * APPLE_HEIGHT;
 
     const apple = this.currentApple;
@@ -144,6 +145,14 @@ export class GameScene extends Phaser.Scene {
         apple?.sprite.destroy();
       }
     }
+
+    this.updateStackTexts();
+  }
+
+  private updateStackTexts() {
+    const left = this.getStackNumberSum(this.leftStack);
+    const right = this.getStackNumberSum(this.rightStack);
+    this.scoreHUD.updateStacks(left, right);
   }
 
   private clearStacks() {
@@ -161,6 +170,6 @@ export class GameScene extends Phaser.Scene {
       this.currentApple.sprite.destroy();
       this.currentApple = undefined;
     }
+    this.updateStackTexts();
   }
-
 }
